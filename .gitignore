@@ -1,2 +1,4 @@
 node_modules/
 .env
+echo "node_modules" >> .gitignore
+echo ".env" >> .gitignore
