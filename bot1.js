@@ -41,8 +41,8 @@ const server = http.createServer((req, res)=> {
   }
   else if(req.url === '/api/users'){
     res.write('Hello to my server!API');
-    //res.write(JSON.stringify([1,2,3]));
-    res.end();
+    res.write(JSON.stringify([1,2,3]));
+    
   
   }
     
