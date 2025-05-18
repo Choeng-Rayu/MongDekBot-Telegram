@@ -61,7 +61,7 @@ const PORT = process.env.PORT || 3001;
 // Create a bot instance
 // const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 //create a bot instance without env file
-const bot = new TelegramBot('6061360947:AAHr6Q524XqM0a361m8057Y7qo0195Jq6g', { polling: true });
+const bot = new TelegramBot('7433555703:AAEXMi6pPKY87UN50wPMEvhj2j2hM-j-Evg', { polling: true });
 
 // Basic command handler - responds to /start
 // Basic command handler - responds to /start
@@ -110,11 +110,12 @@ bot.onText(/\/start/, (msg) => {
 // });
 
 
-//Handle Different Message Types Here's a more advanced example that handles different types of messages:
+// Handle Different Message Types Here's a more advanced example that handles different types of messages:
 bot.on('message', (msg) => {
     const chatId = msg.chat.id;
     const photo = msg.photo;
     const document = msg.document;
+    console.log(msg);
 
 
   //   const options = {
