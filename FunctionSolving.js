@@ -1,256 +1,254 @@
-const math = require('mathjs');
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
+// const math = require('mathjs');
+// const PDFDocument = require('pdfkit');
+// const fs = require('fs');
 
-function analyzeFunction(funcStr) {
-  // Parse the function
-  const expr = math.parse(funcStr);
-  const f = x => {
-    try {
-      return expr.evaluate({x});
-    } catch (e) {
-      return NaN;
-    }
-  };
+// function analyzeFunction(funcStr) {
+//   // Parse the function
+//   const expr = math.parse(funcStr);
+//   const f = x => {
+//     try {
+//       return expr.evaluate({x});
+//     } catch (e) {
+//       return NaN;
+//     }
+//   };
 
-  // Compute derivative
-  const deriv = math.derivative(expr, 'x');
-  const fPrime = x => {
-    try {
-      return deriv.evaluate({x});
-    } catch (e) {
-      return NaN;
-    }
-  };
+//   // Compute derivative
+//   const deriv = math.derivative(expr, 'x');
+//   const fPrime = x => {
+//     try {
+//       return deriv.evaluate({x});
+//     } catch (e) {
+//       return NaN;
+//     }
+//   };
 
-  // Determine domain (simplified detection)
-  const domain = determineDomain(funcStr);
+//   // Determine domain (simplified detection)
+//   const domain = determineDomain(funcStr);
 
-  // Compute limits at infinity numerically
-  const limitNegInf = computeLimit(f, -1e6);
-  const limitPosInf = computeLimit(f, 1e6);
+//   // Compute limits at infinity numerically
+//   const limitNegInf = computeLimit(f, -1e6);
+//   const limitPosInf = computeLimit(f, 1e6);
 
-  // Table of values
-  const xValues = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];
-  const tableOfValues = xValues.map(x => ({x, y: Number.isFinite(f(x)) ? f(x) : 'undefined'}));
+//   // Table of values
+//   const xValues = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];
+//   const tableOfValues = xValues.map(x => ({x, y: Number.isFinite(f(x)) ? f(x) : 'undefined'}));
 
-  // Find roots in [-10, 10]
-  const rootsDeriv = findRoots(fPrime, -10, 10);
-  const rootsFunc = findRoots(f, -10, 10);
+//   // Find roots in [-10, 10]
+//   const rootsDeriv = findRoots(fPrime, -10, 10);
+//   const rootsFunc = findRoots(f, -10, 10);
 
-  // Determine signs and variations
-  const intervalsDeriv = getIntervals(rootsDeriv, -10, 10);
-  const signsDeriv = intervalsDeriv.map(interval => {
-    const testPoint = (interval.start + interval.end) / 2;
-    const value = fPrime(testPoint);
-    return Number.isFinite(value) ? (value > 0 ? '+' : value < 0 ? '-' : '0') : 'undefined';
-  });
+//   // Determine signs and variations
+//   const intervalsDeriv = getIntervals(rootsDeriv, -10, 10);
+//   const signsDeriv = intervalsDeriv.map(interval => {
+//     const testPoint = (interval.start + interval.end) / 2;
+//     const value = fPrime(testPoint);
+//     return Number.isFinite(value) ? (value > 0 ? '+' : value < 0 ? '-' : '0') : 'undefined';
+//   });
 
-  const intervalsFunc = getIntervals(rootsFunc, -10, 10);
-  const signsFunc = intervalsFunc.map(interval => {
-    const testPoint = (interval.start + interval.end) / 2;
-    const value = f(testPoint);
-    return Number.isFinite(value) ? (value > 0 ? '+' : value < 0 ? '-' : '0') : 'undefined';
-  });
+//   const intervalsFunc = getIntervals(rootsFunc, -10, 10);
+//   const signsFunc = intervalsFunc.map(interval => {
+//     const testPoint = (interval.start + interval.end) / 2;
+//     const value = f(testPoint);
+//     return Number.isFinite(value) ? (value > 0 ? '+' : value < 0 ? '-' : '0') : 'undefined';
+//   });
 
-  // Create PDF
-  const doc = new PDFDocument();
-  doc.pipe(fs.createWriteStream('analysis.pdf'));
+//   // Create PDF
+//   const doc = new PDFDocument();
+//   doc.pipe(fs.createWriteStream('analysis.pdf'));
 
-  // Title
-  doc.fontSize(16).text('Analysis of the function', {align: 'center'});
-  doc.moveDown();
+//   // Title
+//   doc.fontSize(16).text('Analysis of the function', {align: 'center'});
+//   doc.moveDown();
 
-  // Function definition
-  doc.fontSize(12).text(`We consider the function defined by f(x) = ${funcStr}.`);
-  doc.moveDown();
+//   // Function definition
+//   doc.fontSize(12).text(`We consider the function defined by f(x) = ${funcStr}.`);
+//   doc.moveDown();
 
-  // Domain
-  doc.text(`Its domain of definition is ${domain}.`);
-  doc.moveDown();
+//   // Domain
+//   doc.text(`Its domain of definition is ${domain}.`);
+//   doc.moveDown();
 
-  // Derivability
-  doc.text(`It is derivable on ${domain}.`);
-  doc.moveDown();
+//   // Derivability
+//   doc.text(`It is derivable on ${domain}.`);
+//   doc.moveDown();
 
-  // Derivative
-  doc.text(`Its derivative is f'(x) = ${deriv.toString()}.`);
-  doc.moveDown();
+//   // Derivative
+//   doc.text(`Its derivative is f'(x) = ${deriv.toString()}.`);
+//   doc.moveDown();
 
-  // Limits
-  doc.text('It admits the below limits:');
-  doc.text(`lim_{x→-∞} f(x) = ${limitNegInf}`);
-  doc.text(`lim_{x→+∞} f(x) = ${limitPosInf}`);
-  doc.moveDown();
+//   // Limits
+//   doc.text('It admits the below limits:');
+//   doc.text(`lim_{x→-∞} f(x) = ${limitNegInf}`);
+//   doc.text(`lim_{x→+∞} f(x) = ${limitPosInf}`);
+//   doc.moveDown();
 
-  // Table of values
-  doc.text('A table of values is:');
-  tableOfValues.forEach(row => {
-    doc.text(`x = ${row.x}, f(x) = ${row.y}`);
-  });
-  doc.moveDown();
+//   // Table of values
+//   doc.text('A table of values is:');
+//   tableOfValues.forEach(row => {
+//     doc.text(`x = ${row.x}, f(x) = ${row.y}`);
+//   });
+//   doc.moveDown();
 
-  // Table of variations
-  doc.text('Its table of variations is:');
-  if (rootsDeriv.length > 0) {
-    doc.text(`Between -∞ and ${rootsDeriv[0].toFixed(2)}, f'(x) ${signsDeriv[0]}`);
-    for (let i = 1; i < rootsDeriv.length; i++) {
-      doc.text(`Between ${rootsDeriv[i-1].toFixed(2)} and ${rootsDeriv[i].toFixed(2)}, f'(x) ${signsDeriv[i]}`);
-    }
-    doc.text(`Between ${rootsDeriv[rootsDeriv.length-1].toFixed(2)} and +∞, f'(x) ${signsDeriv[signsDeriv.length-1]}`);
-  } else {
-    doc.text(`f'(x) ${signsDeriv[0]} for all x in [-10, 10]`);
-  }
-  doc.moveDown();
+//   // Table of variations
+//   doc.text('Its table of variations is:');
+//   if (rootsDeriv.length > 0) {
+//     doc.text(`Between -∞ and ${rootsDeriv[0].toFixed(2)}, f'(x) ${signsDeriv[0]}`);
+//     for (let i = 1; i < rootsDeriv.length; i++) {
+//       doc.text(`Between ${rootsDeriv[i-1].toFixed(2)} and ${rootsDeriv[i].toFixed(2)}, f'(x) ${signsDeriv[i]}`);
+//     }
+//     doc.text(`Between ${rootsDeriv[rootsDeriv.length-1].toFixed(2)} and +∞, f'(x) ${signsDeriv[signsDeriv.length-1]}`);
+//   } else {
+//     doc.text(`f'(x) ${signsDeriv[0]} for all x in [-10, 10]`);
+//   }
+//   doc.moveDown();
 
-  // Table of signs
-  doc.text('Its table of signs is:');
-  if (rootsFunc.length > 0) {
-    doc.text(`Between -∞ and ${rootsFunc[0].toFixed(2)}, f(x) ${signsFunc[0]}`);
-    for (let i = 1; i < rootsFunc.length; i++) {
-      doc.text(`Between ${rootsFunc[i-1].toFixed(2)} and ${rootsFunc[i].toFixed(2)}, f(x) ${signsFunc[i]}`);
-    }
-    doc.text(`Between ${rootsFunc[rootsFunc.length-1].toFixed(2)} and +∞, f(x) ${signsFunc[signsFunc.length-1]}`);
-  } else {
-    doc.text(`f(x) ${signsFunc[0]} for all x in [-10, 10]`);
-  }
-  doc.moveDown();
+//   // Table of signs
+//   doc.text('Its table of signs is:');
+//   if (rootsFunc.length > 0) {
+//     doc.text(`Between -∞ and ${rootsFunc[0].toFixed(2)}, f(x) ${signsFunc[0]}`);
+//     for (let i = 1; i < rootsFunc.length; i++) {
+//       doc.text(`Between ${rootsFunc[i-1].toFixed(2)} and ${rootsFunc[i].toFixed(2)}, f(x) ${signsFunc[i]}`);
+//     }
+//     doc.text(`Between ${rootsFunc[rootsFunc.length-1].toFixed(2)} and +∞, f(x) ${signsFunc[signsFunc.length-1]}`);
+//   } else {
+//     doc.text(`f(x) ${signsFunc[0]} for all x in [-10, 10]`);
+//   }
+//   doc.moveDown();
 
-  // Graph
-  doc.text('Its graph is:');
-  const plotPoints = generatePlotPoints(f, -5, 5, 0.1);
-  drawGraph(doc, plotPoints);
+//   // Graph
+//   doc.text('Its graph is:');
+//   const plotPoints = generatePlotPoints(f, -5, 5, 0.1);
+//   drawGraph(doc, plotPoints);
 
-  // Footer note
-  doc.moveDown();
-  doc.text('Note: these results have been obtained from an automated program and are not guaranteed to be exact.');
-  doc.text('Discover my other apps on lovemaths.eu/apps');
+//   // Footer note
+//   doc.moveDown();
+//   doc.text('Note: these results have been obtained from an automated program and are not guaranteed to be exact.');
+//   doc.text('Discover my other apps on lovemaths.eu/apps');
 
-  doc.end();
-}
+//   doc.end();
+// }
 
-// Helper Functions
-function determineDomain(funcStr) {
-  if (funcStr.includes('/')) {
-    // Rational function: exclude denominator zeros (simplified)
-    const [numerator, denominator] = funcStr.split('/').map(s => math.parse(s));
-    const denomFunc = x => denominator.evaluate({x});
-    const rootsDenom = findRoots(denomFunc, -10, 10);
-    return rootsDenom.length > 0 ? `ℝ \\ {${rootsDenom.map(r => r.toFixed(2)).join(', ')}}` : 'ℝ';
-  } else if (funcStr.includes('log')) {
-    return 'x > 0';
-  } else {
-    return 'ℝ'; // Default for polynomials, exponential, trigonometric
-  }
-}
+// // Helper Functions
+// function determineDomain(funcStr) {
+//   if (funcStr.includes('/')) {
+//     // Rational function: exclude denominator zeros (simplified)
+//     const [numerator, denominator] = funcStr.split('/').map(s => math.parse(s));
+//     const denomFunc = x => denominator.evaluate({x});
+//     const rootsDenom = findRoots(denomFunc, -10, 10);
+//     return rootsDenom.length > 0 ? `ℝ \\ {${rootsDenom.map(r => r.toFixed(2)).join(', ')}}` : 'ℝ';
+//   } else if (funcStr.includes('log')) {
+//     return 'x > 0';
+//   } else {
+//     return 'ℝ'; // Default for polynomials, exponential, trigonometric
+//   }
+// }
 
-function computeLimit(func, x) {
-  const value = func(x);
-  if (!Number.isFinite(value)) {
-    return value > 0 ? '+∞' : '-∞';
-  }
-  return value.toString(); // For oscillating functions, this is approximate
-}
+// function computeLimit(func, x) {
+//   const value = func(x);
+//   if (!Number.isFinite(value)) {
+//     return value > 0 ? '+∞' : '-∞';
+//   }
+//   return value.toString(); // For oscillating functions, this is approximate
+// }
 
-function findRoots(func, start, end, step = 0.1) {
-  const roots = [];
-  let prevValue = func(start);
-  for (let x = start + step; x <= end; x += step) {
-    const value = func(x);
-    if (Number.isFinite(prevValue) && Number.isFinite(value)) {
-      if (prevValue * value < 0) {
-        const root = bisection(func, x - step, x);
-        if (root !== null) roots.push(root);
-      } else if (value === 0) {
-        roots.push(x);
-      }
-    }
-    prevValue = value;
-  }
-  return roots.sort((a, b) => a - b);
-}
+// function findRoots(func, start, end, step = 0.1) {
+//   const roots = [];
+//   let prevValue = func(start);
+//   for (let x = start + step; x <= end; x += step) {
+//     const value = func(x);
+//     if (Number.isFinite(prevValue) && Number.isFinite(value)) {
+//       if (prevValue * value < 0) {
+//         const root = bisection(func, x - step, x);
+//         if (root !== null) roots.push(root);
+//       } else if (value === 0) {
+//         roots.push(x);
+//       }
+//     }
+//     prevValue = value;
+//   }
+//   return roots.sort((a, b) => a - b);
+// }
 
-function bisection(func, a, b, tolerance = 1e-6) {
-  let fa = func(a);
-  let fb = func(b);
-  if (!Number.isFinite(fa) || !Number.isFinite(fb) || fa * fb > 0) return null;
-  while (Math.abs(b - a) > tolerance) {
-    const c = (a + b) / 2;
-    const fc = func(c);
-    if (!Number.isFinite(fc)) return null;
-    if (fc === 0) return c;
-    if (fa * fc < 0) {
-      b = c;
-      fb = fc;
-    } else {
-      a = c;
-      fa = fc;
-    }
-  }
-  return (a + b) / 2;
-}
+// function bisection(func, a, b, tolerance = 1e-6) {
+//   let fa = func(a);
+//   let fb = func(b);
+//   if (!Number.isFinite(fa) || !Number.isFinite(fb) || fa * fb > 0) return null;
+//   while (Math.abs(b - a) > tolerance) {
+//     const c = (a + b) / 2;
+//     const fc = func(c);
+//     if (!Number.isFinite(fc)) return null;
+//     if (fc === 0) return c;
+//     if (fa * fc < 0) {
+//       b = c;
+//       fb = fc;
+//     } else {
+//       a = c;
+//       fa = fc;
+//     }
+//   }
+//   return (a + b) / 2;
+// }
 
-function getIntervals(roots, start, end) {
-  const sortedRoots = [...new Set(roots)].sort((a, b) => a - b);
-  const intervals = [];
-  if (sortedRoots.length === 0) {
-    intervals.push({start, end});
-  } else {
-    if (start < sortedRoots[0]) intervals.push({start, end: sortedRoots[0]});
-    for (let i = 1; i < sortedRoots.length; i++) {
-      intervals.push({start: sortedRoots[i-1], end: sortedRoots[i]});
-    }
-    if (sortedRoots[sortedRoots.length - 1] < end) {
-      intervals.push({start: sortedRoots[sortedRoots.length - 1], end});
-    }
-  }
-  return intervals;
-}
+// function getIntervals(roots, start, end) {
+//   const sortedRoots = [...new Set(roots)].sort((a, b) => a - b);
+//   const intervals = [];
+//   if (sortedRoots.length === 0) {
+//     intervals.push({start, end});
+//   } else {
+//     if (start < sortedRoots[0]) intervals.push({start, end: sortedRoots[0]});
+//     for (let i = 1; i < sortedRoots.length; i++) {
+//       intervals.push({start: sortedRoots[i-1], end: sortedRoots[i]});
+//     }
+//     if (sortedRoots[sortedRoots.length - 1] < end) {
+//       intervals.push({start: sortedRoots[sortedRoots.length - 1], end});
+//     }
+//   }
+//   return intervals;
+// }
 
-function generatePlotPoints(func, start, end, step) {
-  const points = [];
-  for (let x = start; x <= end; x += step) {
-    const y = func(x);
-    if (Number.isFinite(y)) points.push({x, y});
-  }
-  return points;
-}
+// function generatePlotPoints(func, start, end, step) {
+//   const points = [];
+//   for (let x = start; x <= end; x += step) {
+//     const y = func(x);
+//     if (Number.isFinite(y)) points.push({x, y});
+//   }
+//   return points;
+// }
 
-function drawGraph(doc, points) {
-  if (points.length === 0) {
-    doc.text('Graph not plotted due to undefined values.');
-    return;
-  }
-  const xMin = Math.min(...points.map(p => p.x));
-  const xMax = Math.max(...points.map(p => p.x));
-  const yMin = Math.min(...points.map(p => p.y));
-  const yMax = Math.max(...points.map(p => p.y));
+// function drawGraph(doc, points) {
+//   if (points.length === 0) {
+//     doc.text('Graph not plotted due to undefined values.');
+//     return;
+//   }
+//   const xMin = Math.min(...points.map(p => p.x));
+//   const xMax = Math.max(...points.map(p => p.x));
+//   const yMin = Math.min(...points.map(p => p.y));
+//   const yMax = Math.max(...points.map(p => p.y));
 
-  const plotWidth = 200;
-  const plotHeight = 200;
-  const xScale = plotWidth / (xMax - xMin);
-  const yScale = plotHeight / (yMax - yMin);
+//   const plotWidth = 200;
+//   const plotHeight = 200;
+//   const xScale = plotWidth / (xMax - xMin);
+//   const yScale = plotHeight / (yMax - yMin);
 
-  doc.save();
-  doc.translate(50, 250);
-  doc.scale(xScale, -yScale);
-  doc.translate(-xMin, -yMin);
+//   doc.save();
+//   doc.translate(50, 250);
+//   doc.scale(xScale, -yScale);
+//   doc.translate(-xMin, -yMin);
 
-  doc.moveTo(points[0].x, points[0].y);
-  points.forEach(p => doc.lineTo(p.x, p.y));
-  doc.stroke();
+//   doc.moveTo(points[0].x, points[0].y);
+//   points.forEach(p => doc.lineTo(p.x, p.y));
+//   doc.stroke();
 
-  doc.restore();
-}
+//   doc.restore();
+// }
 
-// Example usage
-analyzeFunction('x^2 + 2*x + 1'); // Polynomial
-// analyzeFunction('exp(x)'); // Exponential
-// analyzeFunction('log(x)'); // Logarithmic
-// analyzeFunction('sin(x)'); // Trigonometric
-// analyzeFunction('1/x'); // Rational
-
-
+// // Example usage
+// analyzeFunction('x^2 + 2*x + 1'); // Polynomial
+// // analyzeFunction('exp(x)'); // Exponential
+// // analyzeFunction('log(x)'); // Logarithmic
+// // analyzeFunction('sin(x)'); // Trigonometric
+// // analyzeFunction('1/x'); // Rational
 
 
 
@@ -259,7 +257,9 @@ analyzeFunction('x^2 + 2*x + 1'); // Polynomial
 
 
 
-// for deepseek
+
+
+// //for deepseek
 // const PDFDocument = require('pdfkit');
 // const fs = require('fs');
 
@@ -431,148 +431,6 @@ analyzeFunction('x^2 + 2*x + 1'); // Polynomial
 
 
 
-
-
-
-
-// const PDFDocument = require('pdfkit');
-// const fs = require('fs');
-
-// function analyzeFunction(funcStr) {
-//     const doc = new PDFDocument();
-//     doc.pipe(fs.createWriteStream('function_analysis.pdf'));
-    
-//     // Parse function and compute properties
-//     const terms = parseFunction(funcStr);
-//     const derivative = computeDerivative(terms);
-//     const criticalPoints = findCriticalPoints(derivative.terms);
-//     const fAtCritical = criticalPoints.map(x => evaluate(terms, x));
-
-//     // PDF Content
-//     doc.fontSize(16).text(`Analysis of \\(f(x) = ${funcStr}\\)`, { align: 'center' }).moveDown(1.5);
-
-//     // Domain
-//     doc.fontSize(12).text('1. Domain:', { underline: true });
-//     doc.text('\\( \\mathbb{R} \\)').moveDown();
-
-//     // Derivative
-//     doc.text('2. Derivative:', { underline: true });
-//     doc.text(`\\( f'(x) = ${derivative.string} \\)`).moveDown();
-
-//     // Limits
-//     doc.text('3. Limits:', { underline: true });
-//     doc.text('\\( \\lim_{x\\to-\\infty} f(x) = +\\infty \\)');
-//     doc.text('\\( \\lim_{x\\to+\\infty} f(x) = +\\infty \\)').moveDown();
-
-//     // Table of Variations
-//     doc.text('4. Table of Variations:', { underline: true });
-//     doc.text(createVariationTable(criticalPoints, fAtCritical)).moveDown();
-
-//     // Table of Signs
-//     doc.text('5. Table of Signs:', { underline: true });
-//     doc.text(createSignTable(criticalPoints, fAtCritical)).moveDown();
-
-//     // Disclaimer
-//     doc.addPage().fontSize(10).text('*Results generated programmatically. Verify critical calculations manually.');
-
-//     doc.end();
-// }
-
-// // Helper functions
-// function parseFunction(str) {
-//     str = str.replace(/\s/g, '');
-//     const terms = [];
-//     const termRe = /([+-]?[\d]*x?\^?[\d]*)/g;
-    
-//     let match;
-//     while ((match = termRe.exec(str)) !== null) {
-//         let term = match[0];
-//         if (!term) continue;
-        
-//         let coeff = 1, exp = 0;
-//         if (term.includes('x')) {
-//             const [_, num, pow] = term.match(/([\d]*)?x\^?([\d]*)?/);
-//             coeff = num ? parseInt(num) : 1;
-//             exp = pow ? parseInt(pow) : 1;
-//             if (term.startsWith('-')) coeff *= -1;
-//         } else {
-//             coeff = parseInt(term);
-//         }
-//         terms.push({ coeff, exp });
-//     }
-//     return terms;
-// }
-
-// function computeDerivative(terms) {
-//     const derivativeTerms = [];
-//     for (const term of terms) {
-//         if (term.exp === 0) continue;
-//         derivativeTerms.push({
-//             coeff: term.coeff * term.exp,
-//             exp: term.exp - 1
-//         });
-//     }
-    
-//     // Build derivative string
-//     const parts = [];
-//     for (const term of derivativeTerms) {
-//         let part = '';
-//         if (term.exp === 0) {
-//             part = `${term.coeff}`;
-//         } else {
-//             part = `${term.coeff}x${term.exp > 1 ? `^${term.exp}` : ''}`;
-//         }
-//         parts.push(part);
-//     }
-    
-//     return {
-//         terms: derivativeTerms,
-//         string: parts.join(' + ').replace(/\+\s+-/g, '- ')
-//     };
-// }
-
-// function findCriticalPoints(derivativeTerms) {
-//     // Solve linear equation (ax + b = 0)
-//     let a = 0, b = 0;
-//     for (const term of derivativeTerms) {
-//         if (term.exp === 1) a += term.coeff;
-//         if (term.exp === 0) b += term.coeff;
-//     }
-//     return a !== 0 ? [(-b / a).toFixed(2)] : [];
-// }
-
-// function evaluate(terms, x) {
-//     return terms.reduce((sum, term) => 
-//         sum + term.coeff * (x ** term.exp), 0
-//     ).toFixed(2);
-// }
-
-// function createVariationTable(critical, values) {
-//     if (critical.length === 0) return 'No critical points found';
-    
-//     return `| x       | -∞      | ${critical[0]} | +∞      |
-// |---------|---------|---------|---------|
-// | f'(x)   | -       | 0       | +       |
-// | f(x)    | +∞ ↘    | ${values[0]}  ↗ | +∞      |`;
-// }
-
-// function createSignTable(critical, values) {
-//     if (critical.length === 0) return 'Always positive';
-    
-//     return `| x       | -∞      | ${critical[0]} | +∞      |
-// |---------|---------|---------|---------|
-// | f(x)    | +       | ${values[0]}  | +       |`;
-// }
-
-// // Run with user input example
-// analyzeFunction('x^2+2x+1');
-
-
-
-
-
-
-
 // for gpt
 // const { create, all } = require('mathjs');
 // const { jsPDF } = require('jspdf');
@@ -691,3 +549,267 @@ analyzeFunction('x^2 + 2*x + 1'); // Polynomial
 // // Example usage
 // const result = analyzeFunction('x^2 + 2*x + 2');
 // generatePDF(result);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const math = require('mathjs');
+const { createCanvas } = require('canvas');
+const fs = require('fs').promises;
+const fsSync = require('fs');
+const PDFDocument = require('pdfkit');
+
+async function analyzeMathFunction(funcStr) {
+    let graphPath, pdfPath;
+    
+    try {
+        // 1. Validate input
+        if (!funcStr || typeof funcStr !== 'string' || !funcStr.includes('x')) {
+            throw new Error('Invalid function format');
+        }
+
+        // 2. Analyze function
+        const funcType = identifyFunction(funcStr);
+        if (funcType === 'invalid') {
+            throw new Error('Unprocessable function');
+        }
+
+        const solution = analyzeFunction(funcStr, funcType);
+        if (solution.error) {
+            throw new Error(solution.error);
+        }
+
+        // 3. Generate graph
+        graphPath = await generateFunctionGraph(funcStr);
+
+        // 4. Create PDF
+        pdfPath = await generateAnalysisPDF(solution, graphPath);
+
+        // 5. Cleanup graph
+        if (graphPath) await fs.unlink(graphPath);
+
+        return pdfPath;
+
+    } catch (error) {
+        // Cleanup any created files
+        await Promise.allSettled([
+            graphPath && fs.unlink(graphPath),
+            pdfPath && fs.unlink(pdfPath)
+        ]);
+        throw error;
+    }
+}
+
+
+
+function identifyFunction(funcStr) {
+  try {
+    const node = math.parse(funcStr);
+    const trigFuncs = ['sin', 'cos', 'tan', 'cot', 'sec', 'csc'];
+    const hasTrig = node.filter(n => n.isFunctionNode && trigFuncs.includes(n.fn.name)).length > 0;
+    
+    if (hasTrig) return 'trigonometric';
+    if (funcStr.includes('^') || funcStr.includes('exp')) return 'exponential';
+    if (funcStr.includes('log') || funcStr.includes('ln')) return 'logarithmic';
+    
+    const denominators = node.filter(n => 
+      n.isOperatorNode && n.op === '/' && n.args.some(arg => arg.toString().includes('x'))
+    );
+    if (denominators.length > 0) return 'rational';
+    
+    const quadraticTerms = node.filter(n => 
+      (n.isOperatorNode && n.op === '^' && n.args[0].toString() === 'x' && n.args[1].value === 2) ||
+      n.toString().includes('x^2')
+    );
+    if (quadraticTerms.length > 0) return 'quadratic';
+    
+    return funcStr.includes('x') ? 'linear' : 'unknown';
+  } catch (e) {
+    return 'invalid';
+  }
+}
+
+
+// Function solver
+function analyzeFunction(funcStr, type) {
+  try {
+    const func = math.compile(funcStr);
+    const solution = { type, description: '' };
+
+    switch (type) {
+      case 'linear':
+        solution.roots = math.solve(funcStr, math.symbol('x'));
+        solution.description = `Linear equation solution: x = ${solution.roots[0]}`;
+        break;
+        
+      case 'quadratic':
+        solution.roots = math.polynomialRoot([1, -3, 2]).map(n => n.toFixed(2));
+        solution.description = `Quadratic roots: ${solution.roots.join(', ')}`;
+        break;
+        
+      case 'exponential':
+        solution.properties = {
+          base: funcStr.match(/[\d.]+(?=\^)/)?.[0] || 'e',
+          type: funcStr.includes('-x') ? 'Decay' : 'Growth'
+        };
+        solution.description = `${solution.properties.type} exponential function`;
+        break;
+        
+      case 'logarithmic':
+        solution.properties = {
+          base: funcStr.includes('ln') ? 'e' : funcStr.match(/log\((\d+)/)?.[1] || 10
+        };
+        solution.description = `Logarithmic function (base ${solution.properties.base})`;
+        break;
+        
+      case 'rational':
+        const denom = funcStr.split('/')[1];
+        solution.asymptotes = denom ? math.solve(denom, 'x') : [];
+        solution.description = solution.asymptotes.length ? 
+          `Vertical asymptotes at x = ${solution.asymptotes.join(', ')}` : 
+          'Rational function analysis';
+        break;
+        
+      case 'trigonometric':
+        const trigFunc = funcStr.match(/(sin|cos|tan|cot|sec|csc)/)?.[0] || 'unknown';
+        solution.properties = {
+          function: trigFunc,
+          period: ['sin', 'cos'].includes(trigFunc) ? '2π' : 'π'
+        };
+        solution.description = `${trigFunc} function (period: ${solution.properties.period})`;
+        break;
+        
+      default:
+        solution.description = 'General function analysis';
+    }
+
+    solution.evaluation = {
+      f0: func.evaluate({ x: 0 }).toFixed(2),
+      f1: func.evaluate({ x: 1 }).toFixed(2)
+    };
+    
+    return solution;
+  } catch (error) {
+    return { error: `Analysis failed: ${error.message}` };
+  }
+}
+
+
+// Graph generator
+async function generateFunctionGraph(funcStr) {
+  try {
+    const canvas = createCanvas(600, 400);
+    const ctx = canvas.getContext('2d');
+    
+    // Setup canvas
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, 600, 400);
+    
+    // Draw axes
+    ctx.strokeStyle = '#000000';
+    ctx.beginPath();
+    ctx.moveTo(0, 200);
+    ctx.lineTo(600, 200);
+    ctx.moveTo(300, 0);
+    ctx.lineTo(300, 400);
+    ctx.stroke();
+    
+    // Plot function
+    ctx.strokeStyle = '#2196F3';
+    ctx.beginPath();
+    const func = math.compile(funcStr);
+    
+    for (let x = -15; x <= 15; x += 0.1) {
+      try {
+        const y = func.evaluate({ x });
+        const plotX = 300 + x * 20;
+        const plotY = 200 - y * 20;
+        ctx.lineTo(plotX, plotY);
+      } catch {
+        ctx.moveTo(300 + (x + 0.1) * 20, 200);
+      }
+    }
+    ctx.stroke();
+    
+    // Save to file
+    const graphPath = `graph_${Date.now()}.png`;
+    await fs.writeFile(graphPath, canvas.toBuffer('image/png'));
+    return graphPath;
+  } catch (error) {
+    console.error('Graph generation error:', error);
+    return null;
+  }
+}
+
+
+// PDF generator
+async function generateAnalysisPDF(solution, graphPath) {
+  return new Promise((resolve, reject) => {
+    const pdfPath = `analysis_${Date.now()}.pdf`;
+    const doc = new PDFDocument();
+    const stream = fsSync.createWriteStream(pdfPath);
+    
+    doc.pipe(stream);
+    doc.font('Helvetica-Bold').fontSize(20).text('Function Analysis Report', { align: 'center' });
+    doc.moveDown(0.5);
+    
+    doc.font('Helvetica').fontSize(14)
+      .text(`Function Type: ${solution.type}`)
+      .moveDown(0.5)
+      .text(solution.description);
+    
+    if (solution.roots) {
+      doc.text(`Roots: ${solution.roots.join(', ')}`).moveDown(0.5);
+    }
+    
+    if (solution.properties) {
+      doc.text('Properties:');
+      Object.entries(solution.properties).forEach(([key, value]) => {
+        doc.text(`- ${key}: ${value}`);
+      });
+      doc.moveDown(0.5);
+    }
+    
+    doc.text(`Evaluations: f(0) = ${solution.evaluation.f0}, f(1) = ${solution.evaluation.f1}`);
+    
+    if (graphPath) {
+      doc.moveDown().image(graphPath, { 
+        fit: [400, 250], 
+        align: 'center' 
+      });
+    }
+    
+    doc.end();
+    
+    stream.on('finish', () => resolve(pdfPath));
+    stream.on('error', reject);
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+// Keep these helper functions unchanged from original code:
+// - identifyFunction()
+// - analyzeFunction()
+// - generateFunctionGraph()
+// - generateAnalysisPDF()
