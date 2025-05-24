@@ -5,7 +5,7 @@ const { Telegraf, Markup, session } = require('telegraf');
 require('dotenv').config();
 
 // Initialize bot (ALWAYS use environment variables for tokens!)
-const bot = new Telegraf(process.env.BOT_TOKEN || '7433555703:AAEXMi6pPKY87UN50wPMEvhj2j2hM-j-Evg');
+const bot = new Telegraf(process.env.BOT_TOKEN || '7977683020:AAFOi1J2ATnNdZWQDV01ApMQt0v-_lBBvgI');
 
 // ==============================================
 // 1. SESSION SETUP

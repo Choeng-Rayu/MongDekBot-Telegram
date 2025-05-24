@@ -83,7 +83,16 @@
 require('dotenv').config();
 const { Telegraf, session } = require('telegraf');
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+const token = process.env.TELEGRAM_BOT_TOKEN || '7977683020:AAFOi1J2ATnNdZWQDV01ApMQt0v-_lBBvgI';
+console.log('Script started');
+console.log('TELEGRAM_BOT_TOKEN:', token);
+
+if (!token || token.trim() === '') {
+  console.error('❌ TELEGRAM_BOT_TOKEN is missing! Please set it in your .env file.');
+  process.exit(1);
+}
+
+const bot = new Telegraf(token);
 
 // Enable session middleware
 bot.use(session());
@@ -145,10 +154,17 @@ bot.on('text', (ctx) => {
   }
 });
 
-// Launch the bot
+// Launch the bot and print bot info
 bot.launch()
-  .then(() => console.log('Bot is running...'))
-  .catch((err) => console.error('Error launching bot:', err));
+  .then(async () => {
+    const botInfo = await bot.telegram.getMe();
+    console.log(`Bot Info:\nUsername: @${botInfo.username}\nID: ${botInfo.id}\nFirst Name: ${botInfo.first_name}`);
+    console.log('🤖 Bot is running!');
+  })
+  .catch((err) => {
+    console.error('Failed to launch bot:', err);
+    process.exit(1);
+  });
 
 // Graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'));
