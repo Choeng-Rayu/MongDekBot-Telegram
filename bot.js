@@ -264,6 +264,15 @@ bot.catch((err, ctx) => {
   console.error(`Error for ${ctx.updateType}`, err);
 });
 
+(async () => {
+  try {
+    const me = await bot.telegram.getMe();
+    console.log(`Bot ${me.username} is running...`);
+  } catch (err) {
+    console.error('Failed to get bot info:', err);
+  }
+})();
+
 console.log('Bot is running...');
 
 
