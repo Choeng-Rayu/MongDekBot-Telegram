@@ -265,7 +265,10 @@ bot.onText(/Unsubscribe/, async (msg) => {
   );
 });
 
-console.log('Bot is running...');
+bot.getMe().then((me)=>{
+  console.log(`Bot ${me.username} is running`);
+});
+
 
 
 
