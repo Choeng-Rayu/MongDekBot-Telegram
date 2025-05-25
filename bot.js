@@ -56,7 +56,7 @@ app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   
   // Replace with your actual Railway URL
-  const webhookUrl = process.env.WEBHOOK_URL || 'https://your-app-name.railway.app/webhook';
+  const webhookUrl = process.env.WEBHOOK_URL;
   try {
     await bot.setWebHook(webhookUrl);
     console.log('Webhook set successfully to', webhookUrl);
