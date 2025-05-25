@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@railway/app-runner"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/webhook<TELEGRAM_BOT_TOKEN>",
+      "dest": "/"
+    }
+  ]
+}
