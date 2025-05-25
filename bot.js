@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Initialize bot
-const token = process.env.TELEGRAM_BOT_TOKEN;
+const token = process.env.TELEGRAM_BOT_TOKEN  || '7592873435:AAF6a9CeL_R4gLmRBz_-qd6gmeb2KY07UtU';
 if (!token) {
   console.error('TELEGRAM_BOT_TOKEN is not set');
   process.exit(1);
