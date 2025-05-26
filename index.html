@@ -1,0 +1,262 @@
+<body class="bg-gray-900 text-white min-h-screen">
+  <link rel="stylesheet" href="style.css">
+  <!-- Background Effect -->
+  <div id="vanta-bg" class="fixed w-full h-full top-0 left-0 z-0"></div>
+
+  <div class="relative z-10 container mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="text-center mb-12">
+      <h1 class="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
+        Voxel Creatures Evolutionary Sim
+      </h1>
+      <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+        Watch voxel creatures evolve with physics-based movement, environmental interactions, and complex behaviors.
+      </p>
+    </header>
+
+    <!-- Main Simulation Area -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+      <!-- Left Panel - Controls -->
+      <div class="bg-gray-800 bg-opacity-80 rounded-xl p-6 shadow-xl backdrop-blur-sm">
+        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 flex items-center">
+          <i class="fas fa-sliders-h mr-2 text-teal-400"></i>
+          Simulation Controls
+        </h2>
+
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium mb-1">Environment Type</label>
+            <select id="environment-type" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="plains">Plains (balanced)</option>
+              <option value="ocean">Ocean (swimming focus)</option>
+              <option value="mountains">Mountains (climbing/strength)</option>
+              <option value="desert">Desert (heat resistance)</option>
+              <option value="forest">Forest (camouflage)</option>
+              <option value="predators">Predators (speed/strength)</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Population Size</label>
+              <input type="range" id="population-size" min="5" max="30" value="12" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+              <div class="flex justify-between text-xs text-gray-400 mt-1">
+                <span>5</span>
+                <span>30</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-1">Mutation Rate</label>
+              <input type="range" id="mutation-rate" min="1" max="10" value="4" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+              <div class="flex justify-between text-xs text-gray-400 mt-1">
+                <span>1%</span>
+                <span>10%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Food Amount</label>
+              <input type="range" id="food-amount" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+              <div class="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Sparse</span>
+                <span>Abundant</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-1">Physics Accuracy</label>
+              <input type="range" id="physics-accuracy" min="1" max="5" value="3" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+              <div class="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Low</span>
+                <span>High</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex space-x-3">
+            <button id="start-btn" class="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-2 px-4 rounded-md font-medium transition flex items-center justify-center">
+              <i class="fas fa-play mr-2"></i> Start Evolution
+            </button>
+            <button id="pause-btn" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded-md font-medium transition flex items-center justify-center">
+              <i class="fas fa-pause mr-2"></i> Pause
+            </button>
+            <button id="reset-btn" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded-md font-medium transition flex items-center justify-center">
+              <i class="fas fa-undo mr-2"></i> Reset
+            </button>
+          </div>
+
+          <div class="pt-4 border-t border-gray-700">
+            <h3 class="font-medium mb-2 flex items-center">
+              <i class="fas fa-info-circle mr-2 text-blue-400"></i>
+              Current Generation: <span id="generation-counter" class="ml-2 font-bold">0</span>
+            </h3>
+            <h3 class="font-medium mb-2 flex items-center">
+              <i class="fas fa-bolt mr-2 text-yellow-400"></i>
+              Top Fitness: <span id="fitness-score" class="ml-2 font-bold">0</span>
+            </h3>
+            <h3 class="font-medium mb-2 flex items-center">
+              <i class="fas fa-utensils mr-2 text-green-400"></i>
+              Food Available: <span id="food-count" class="ml-2 font-bold">0</span>
+            </h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Panel - 3D Viewer -->
+      <div class="lg:col-span-2 rounded-xl overflow-hidden shadow-xl">
+        <div class="voxel-container relative" id="three-container">
+          <div id="stats-overlay" class="absolute z-10 bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent hidden">
+            <div class="text-white text-sm grid grid-cols-2 gap-2">
+              <div>Speed: <span class="float-right" id="stat-speed">0</span></div>
+              <div>Strength: <span class="float-right" id="stat-strength">0</span></div>
+              <div>Size: <span class="float-right" id="stat-size">0</span></div>
+              <div>Health: <span class="float-right" id="stat-health">0</span></div>
+              <div>Energy: <span class="float-right" id="stat-energy">0</span></div>
+              <div>Age: <span class="float-right" id="stat-age">0</span></div>
+            </div>
+          </div>
+          <div id="loading-overlay" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70">
+            <div class="text-center">
+              <i class="fas fa-spinner fa-spin text-4xl mb-4 text-teal-400"></i>
+              <p class="text-xl">Loading physics engine...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 bg-opacity-80 p-4 border-t border-gray-700 backdrop-blur-sm">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="font-medium">Selected: <span id="selected-creature" class="font-semibold text-teal-300">None</span></h3>
+              <div class="flex space-x-2 mt-1">
+                <span id="creature-age" class="stats-badge text-xs px-2 py-1">Age: 0</span>
+                <span id="creature-fitness" class="stats-badge text-xs px-2 py-1">Fitness: 0</span>
+                <span id="creature-generation" class="stats-badge text-xs px-2 py-1">Gen: 0</span>
+                <span id="creature-species" class="stats-badge text-xs px-2 py-1">Species: New</span>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button id="breed-btn" class="bg-blue-600 hover:bg-blue-500 text-white py-1 px-3 rounded-md text-sm transition">
+                <i class="fas fa-dna mr-1"></i> Breed
+              </button>
+              <button id="mutate-btn" class="bg-purple-600 hover:bg-purple-500 text-white py-1 px-3 rounded-md text-sm transition">
+                <i class="fas fa-radiation mr-1"></i> Mutate
+              </button>
+              <button id="follow-btn" class="bg-green-600 hover:bg-green-500 text-white py-1 px-3 rounded-md text-sm transition">
+                <i class="fas fa-eye mr-1"></i> Follow
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Population Grid -->
+    <div class="bg-gray-800 bg-opacity-80 rounded-xl p-6 shadow-xl backdrop-blur-sm mb-8">
+      <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 flex items-center">
+        <i class="fas fa-users mr-2 text-blue-400"></i>
+        Population <span class="ml-auto text-sm font-normal">(Click to select and track)</span>
+      </h2>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" id="population-grid">
+        <div class="text-center py-12 text-gray-500">
+          <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+          <p>Initializing simulation...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats and Genetics Panel -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Lineage Graph -->
+      <div class="bg-gray-800 bg-opacity-80 rounded-xl p-6 shadow-xl backdrop-blur-sm">
+        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 flex items-center">
+          <i class="fas fa-project-diagram mr-2 text-purple-400"></i>
+          Evolutionary Lineage
+        </h2>
+        <div class="h-64 overflow-x-auto overflow-y-hidden">
+          <canvas id="lineage-chart" class="w-full h-full"></canvas>
+        </div>
+      </div>
+
+      <!-- Genetic Traits -->
+      <div class="bg-gray-800 bg-opacity-80 rounded-xl p-6 shadow-xl backdrop-blur-sm">
+        <h2 class="text-2xl font-semibold mb-4 border-b border-gray-700 pb-2 flex items-center">
+          <i class="fas fa-dna mr-2 text-red-400"></i>
+          Genetic Traits Breakdown
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium">Speed Gene</span>
+              <span class="text-xs text-gray-400" id="speed-value">0%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div id="speed-bar" class="gene-progress bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium">Strength Gene</span>
+              <span class="text-xs text-gray-400" id="strength-value">0%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div id="strength-bar" class="gene-progress bg-red-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium">Size Gene</span>
+              <span class="text-xs text-gray-400" id="size-value">0%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div id="size-bar" class="gene-progress bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium">Health Gene</span>
+              <span class="text-xs text-gray-400" id="health-value">0%</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div id="health-bar" class="gene-progress bg-yellow-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium">Behavior</span>
+              <span class="text-xs text-gray-400" id="behavior-type">Passive</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div id="behavior-bar" class="gene-progress bg-indigo-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between mb-1">
+              <span class="text-sm font-medium">Specialization</span>
+              <span class="text-xs text-gray-400" id="specialization">None</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div id="specialization-bar" class="gene-progress bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-gray-500 text-sm">
+      <p>Voxel Creatures Evolutionary Simulator • Physics-based evolution simulation with Three.js and Cannon.js</p>
+      <p class="mt-2"><i class="fas fa-code-branch mr-1"></i> Press <kbd class="px-2 py-1 bg-gray-800 rounded text-xs">Space</kbd> to pause/resume | <kbd class="px-2 py-1 bg-gray-800 rounded text-xs">F</kbd> to toggle follow mode</p>
+    </footer>
+  </div>
+
+  <script src="index.js"></script>
